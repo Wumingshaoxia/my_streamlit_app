@@ -10,7 +10,7 @@ from docx.shared import Pt
 from docx.oxml.ns import qn
 import os  # 用于处理文件名和后缀
 
-st.title("Hi！这里可以生成催缴函/回执函")
+st.title("Hi！这里可以生成催缴函/回执函/确认函")
 
 # =============================
 # 提供 Excel 模板下载
@@ -31,7 +31,7 @@ with open(os.path.join(BASE_DIR, "催缴函-template.xlsx"), "rb") as f:
 excel_file = st.file_uploader("上传已填写的Excel模板", type="xlsx")
 
 # 选择生成类型
-doc_type = st.selectbox("请选择生成类型：", ["催缴函", "回执函"])
+doc_type = st.selectbox("请选择生成类型：", ["催缴函", "回执函", "确认函"])
 
 # 日期选择器
 if doc_type == "催缴函":
@@ -39,7 +39,7 @@ if doc_type == "催缴函":
     stop_date = st.date_input("请选择支付欠费截止日期")
     end_date = stop_date + timedelta(days=1)
 else:
-    receipt_date = st.date_input("请选择回执日期")
+    receipt_date = st.date_input("请选择回执/确认日期")
 
 if excel_file:
     st.success("Excel 上传成功！")
@@ -111,7 +111,7 @@ if excel_file:
                         second_sec._sectPr.getroottree().getpath(second_sec._sectPr)):
                     p._element.getparent().remove(p._element)
 
-    # 删除回执函开头第一个表格
+    # 删除回执函/确认函开头第一个表格
     def remove_first_table(doc):
         if doc.tables:
             tbl = doc.tables[0]._element
@@ -123,7 +123,13 @@ if excel_file:
     if st.button("生成 Word"):
         TEMPLATE1_PATH = os.path.join(BASE_DIR, "template1.docx")
         TEMPLATE2_PATH = os.path.join(BASE_DIR, "template2.docx")
-        TEMPLATE_PATH = TEMPLATE1_PATH if doc_type == "催缴函" else TEMPLATE2_PATH
+        TEMPLATE3_PATH = os.path.join(BASE_DIR, "template3.docx")  # 确认函模板
+        if doc_type == "催缴函":
+            TEMPLATE_PATH = TEMPLATE1_PATH
+        elif doc_type == "回执函":
+            TEMPLATE_PATH = TEMPLATE2_PATH
+        else:
+            TEMPLATE_PATH = TEMPLATE3_PATH
 
         if mode == "每个集团单独生成一个 Word":
             zip_buffer = io.BytesIO()
@@ -202,12 +208,12 @@ if excel_file:
                 append_doc(combined_doc, doc)
 
             # ---------------------------
-            # 删除前两页和前 len(df) 行（催缴函）
+            # 删除前两页和前 len(df)+14 行（催缴函/确认函）
             # ---------------------------
-            if doc_type == "催缴函":
+            if doc_type == "催缴函" or doc_type == "确认函":
                 remove_first_two_sections(combined_doc)
                 remove_first_n_paragraphs(combined_doc, n=len(df)+14)
-            else:
+            else:  # 回执函
                 remove_first_table(combined_doc)
                 remove_first_two_sections(combined_doc)
                 remove_first_n_paragraphs(combined_doc, n=22)
@@ -279,4 +285,3 @@ if excel_file2:
                     file_name="重命名后的文件.zip",
                     mime="application/zip"
                 )
-
