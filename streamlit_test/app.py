@@ -14,11 +14,8 @@ st.title("Hi！这里可以生成催缴函/回执函")
 # =============================
 # 提供 Excel 模板下载
 # =============================
-rename_template_path = os.path.join(BASE_DIR, "Rename_template.xlsx")
-
-with open(rename_template_path, "rb") as f:
-    rename_template = f.read()
-
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 with open(os.path.join(BASE_DIR, "催缴函-template.xlsx"), "rb") as f:
 
