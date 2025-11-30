@@ -221,3 +221,87 @@ if excel_file:
                 file_name=f"合并{doc_type}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
+import streamlit as st
+import pandas as pd
+import io
+import zipfile
+import os  # 用于处理文件名和后缀
+
+st.title("这里可以批量重命名")
+
+# ==========================
+# 1️⃣ 提供 Excel 模板下载
+# ==========================
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(BASE_DIR, "Rename_template.xlsx"), "rb") as f:
+
+    st.download_button(
+        "📥 下载Excel 模板（Rename_template.xlsx）",
+        data=f,
+        file_name="Rename_template.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+st.markdown("Tips:按新名顺序扫描，扫描设置使用自动命名为1、2、3……这样文件原名只需填1、2、3下拉即可（像这样↓）")
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+st.image(os.path.join(BASE_DIR, "example.png"))
+
+# ==========================
+# 2️⃣ 上传 Excel
+# ==========================
+excel_file = st.file_uploader("上传已填写的 Excel 模板", type="xlsx")
+
+if excel_file:
+    df = pd.read_excel(excel_file)
+    st.success("Excel 上传成功！")
+    
+    # 检查必须列
+    if "文件原名" not in df.columns or "新名" not in df.columns:
+        st.error("Excel 必须包含列：'文件原名' 和 '新名'")
+    else:
+        # 转成字符串并去掉空格和前导单引号，确保匹配成功
+        df["文件原名"] = df["文件原名"].astype(str).str.strip().str.lstrip("'")
+        df["新名"] = df["新名"].astype(str).str.strip().str.lstrip("'")
+
+        # ==========================
+        # 3️⃣ 用户选择需要改名的文件
+        # ==========================
+        files_to_rename = st.file_uploader(
+            "选择需要重命名的文件（可以多选）",
+            accept_multiple_files=True
+        )
+
+        if files_to_rename:
+            st.write("已选择文件：", [f.name for f in files_to_rename])
+
+            if st.button("开始批量重命名"):
+                zip_buffer = io.BytesIO()
+                renamed_count = 0
+
+                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+                    for f in files_to_rename:
+                        # 分离文件名和后缀
+                        file_base, file_ext = os.path.splitext(f.name)
+                        file_base = file_base.strip().lstrip("'")  # 去掉空格和单引号
+
+                        # 匹配 Excel 中的原名
+                        match_row = df[df["文件原名"] == file_base]
+                        if not match_row.empty:
+                            new_base_name = str(match_row["新名"].values[0]).strip().lstrip("'")
+                            new_name = new_base_name + file_ext  # 拼回原来的后缀
+                            zipf.writestr(new_name, f.getbuffer())
+                            renamed_count += 1
+                        else:
+                            st.warning(f"文件 '{f.name}' 在 Excel 中没有找到对应新名")
+
+                zip_buffer.seek(0)
+                st.success(f"重命名完成，共 {renamed_count} 个文件被重命名")
+                st.download_button(
+                    "📥 下载重命名后的文件（ZIP）",
+                    data=zip_buffer,
+                    file_name="重命名后的文件.zip",
+                    mime="application/zip"
+                )
+
+
