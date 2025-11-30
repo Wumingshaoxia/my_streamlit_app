@@ -96,7 +96,7 @@ if excel_file:
             p._element.getparent().remove(p._element)
             removed += 1
 
-    # 删除前两个 section（前两页）——旧函数保留备用
+    # 删除前两个 section（前两页）
     def remove_first_two_sections(doc):
         if len(doc.sections) > 1:
             first_sec = doc.sections[0]
@@ -111,15 +111,6 @@ if excel_file:
                         second_sec._sectPr.getroottree().getpath(second_sec._sectPr)):
                     p._element.getparent().remove(p._element)
 
-    # 删除前 N 个 section（新函数）
-    def remove_first_n_sections(doc, n=1):
-        for i in range(min(n, len(doc.sections))):
-            sec = doc.sections[0]
-            for p in list(doc.paragraphs):
-                if p._element.getroottree().getpath(p._element).startswith(
-                        sec._sectPr.getroottree().getpath(sec._sectPr)):
-                    p._element.getparent().remove(p._element)
-
     # 删除回执函开头第一个表格
     def remove_first_table(doc):
         if doc.tables:
@@ -130,20 +121,15 @@ if excel_file:
     # 点击生成按钮
     # ---------------------------
     if st.button("生成 Word"):
-
         TEMPLATE1_PATH = os.path.join(BASE_DIR, "template1.docx")
         TEMPLATE2_PATH = os.path.join(BASE_DIR, "template2.docx")
-        if doc_type == "催缴函":
-            TEMPLATE_PATH = TEMPLATE1_PATH
-        else:
-            TEMPLATE_PATH = TEMPLATE2_PATH
+        TEMPLATE_PATH = TEMPLATE1_PATH if doc_type == "催缴函" else TEMPLATE2_PATH
 
         if mode == "每个集团单独生成一个 Word":
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for _, row in df.iterrows():
                     doc = Document(TEMPLATE_PATH)
-
                     if doc_type == "催缴函":
                         placeholders = {
                             "{{集团名称}}": row["集团名称"],
@@ -181,15 +167,12 @@ if excel_file:
                 file_name=f"{doc_type}合集.zip",
                 mime="application/zip",
             )
-
         else:
             # 合并模式
             combined_doc = Document(TEMPLATE_PATH)
             first = True
-
             for _, row in df.iterrows():
                 doc = Document(TEMPLATE_PATH)
-
                 if doc_type == "催缴函":
                     placeholders = {
                         "{{集团名称}}": row["集团名称"],
@@ -216,15 +199,15 @@ if excel_file:
                 if not first:
                     combined_doc.add_section(WD_SECTION.NEW_PAGE)
                 first = False
-
                 append_doc(combined_doc, doc)
 
-            # 催缴函：删除前 N 页（集团数量）
+            # ---------------------------
+            # 删除前两页和前 len(df) 行（催缴函）
+            # ---------------------------
             if doc_type == "催缴函":
-                remove_first_n_sections(combined_doc, n=len(df))
-                remove_first_n_paragraphs(combined_doc, n=17)
+                remove_first_two_sections(combined_doc)
+                remove_first_n_paragraphs(combined_doc, n=len(df))
             else:
-                # 回执函：删除开头第一个表格
                 remove_first_table(combined_doc)
                 remove_first_two_sections(combined_doc)
                 remove_first_n_paragraphs(combined_doc, n=22)
@@ -240,9 +223,9 @@ if excel_file:
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
 
-# =========================================
-# 批量重命名功能部分（不变）
-# =========================================
+# ===========================================
+# 批量重命名功能
+# ===========================================
 st.title("这里可以批量重命名")
 
 with open(os.path.join(BASE_DIR, "Rename_template.xlsx"), "rb") as f:
@@ -252,40 +235,35 @@ with open(os.path.join(BASE_DIR, "Rename_template.xlsx"), "rb") as f:
         file_name="Rename_template.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 st.markdown("Tips:按新名顺序扫描，扫描设置使用自动命名为1、2、3……这样文件原名只需填1、2、3下拉即可（像这样↓）")
 st.image(os.path.join(BASE_DIR, "example.png"))
 
-excel_file_rename = st.file_uploader("上传已填写的 Excel 模板", type="xlsx", key="rename_excel")
-
-if excel_file_rename:
-    df_rename = pd.read_excel(excel_file_rename)
+excel_file2 = st.file_uploader("上传已填写的 Excel 模板", type="xlsx", key="rename_excel")
+if excel_file2:
+    df2 = pd.read_excel(excel_file2)
     st.success("Excel 上传成功！")
-    
-    if "文件原名" not in df_rename.columns or "新名" not in df_rename.columns:
+    if "文件原名" not in df2.columns or "新名" not in df2.columns:
         st.error("Excel 必须包含列：'文件原名' 和 '新名'")
     else:
-        df_rename["文件原名"] = df_rename["文件原名"].astype(str).str.strip().str.lstrip("'")
-        df_rename["新名"] = df_rename["新名"].astype(str).str.strip().str.lstrip("'")
+        df2["文件原名"] = df2["文件原名"].astype(str).str.strip().str.lstrip("'")
+        df2["新名"] = df2["新名"].astype(str).str.strip().str.lstrip("'")
 
         files_to_rename = st.file_uploader(
             "选择需要重命名的文件（可以多选）",
             accept_multiple_files=True,
-            key="files_to_rename"
+            key="rename_files"
         )
-
         if files_to_rename:
             st.write("已选择文件：", [f.name for f in files_to_rename])
-
             if st.button("开始批量重命名"):
                 zip_buffer = io.BytesIO()
                 renamed_count = 0
-
                 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
                     for f in files_to_rename:
                         file_base, file_ext = os.path.splitext(f.name)
                         file_base = file_base.strip().lstrip("'")
-
-                        match_row = df_rename[df_rename["文件原名"] == file_base]
+                        match_row = df2[df2["文件原名"] == file_base]
                         if not match_row.empty:
                             new_base_name = str(match_row["新名"].values[0]).strip().lstrip("'")
                             new_name = new_base_name + file_ext
@@ -293,7 +271,6 @@ if excel_file_rename:
                             renamed_count += 1
                         else:
                             st.warning(f"文件 '{f.name}' 在 Excel 中没有找到对应新名")
-
                 zip_buffer.seek(0)
                 st.success(f"重命名完成，共 {renamed_count} 个文件被重命名")
                 st.download_button(
