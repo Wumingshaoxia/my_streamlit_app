@@ -8,7 +8,7 @@ from copy import deepcopy
 from docx.enum.section import WD_SECTION
 from docx.shared import Pt
 from docx.oxml.ns import qn
-import os  # 用于处理文件名和后缀
+import os
 
 st.title("Hi！这里可以生成催缴函/回执函")
 
@@ -88,7 +88,7 @@ if excel_file:
             target.element.body.append(deepcopy(element))
 
     # 删除前 N 段落
-    def remove_first_n_paragraphs(doc, n=18):
+    def remove_first_n_paragraphs(doc, n):
         removed = 0
         while removed < n and len(doc.paragraphs) > 0:
             p = doc.paragraphs[0]
@@ -201,14 +201,15 @@ if excel_file:
                 append_doc(combined_doc, doc)
 
             # ---------------------------
-            # 删除前两页和前 len(df)+14 行
+            # 根据类型单独设置删除行数
             # ---------------------------
-            remove_first_two_sections(combined_doc)
-            remove_first_n_paragraphs(combined_doc, n=len(df)+14)  # 催缴函和回执函通用
-
-            # 回执函需要删除开头表格
-            if doc_type == "回执函":
+            if doc_type == "催缴函":
+                remove_first_two_sections(combined_doc)
+                remove_first_n_paragraphs(combined_doc, n=len(df)+14)  # 这里可以自行调整 +14
+            else:  # 回执函
                 remove_first_table(combined_doc)
+                remove_first_two_sections(combined_doc)
+                remove_first_n_paragraphs(combined_doc, n=len(df)+19)  # 这里也可以自行调整
 
             output_buffer = io.BytesIO()
             combined_doc.save(output_buffer)
@@ -220,60 +221,3 @@ if excel_file:
                 file_name=f"合并{doc_type}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
-
-# ===========================================
-# 批量重命名功能（不变）
-# ===========================================
-st.title("这里可以批量重命名")
-
-with open(os.path.join(BASE_DIR, "Rename_template.xlsx"), "rb") as f:
-    st.download_button(
-        "📥 下载Excel 模板（Rename_template.xlsx）",
-        data=f,
-        file_name="Rename_template.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-st.markdown("Tips:按新名顺序扫描，扫描设置使用自动命名为1、2、3……这样文件原名只需填1、2、3下拉即可（像这样↓）")
-st.image(os.path.join(BASE_DIR, "example.png"))
-
-excel_file2 = st.file_uploader("上传已填写的 Excel 模板", type="xlsx", key="rename_excel")
-if excel_file2:
-    df2 = pd.read_excel(excel_file2)
-    st.success("Excel 上传成功！")
-    if "文件原名" not in df2.columns or "新名" not in df2.columns:
-        st.error("Excel 必须包含列：'文件原名' 和 '新名'")
-    else:
-        df2["文件原名"] = df2["文件原名"].astype(str).str.strip().str.lstrip("'")
-        df2["新名"] = df2["新名"].astype(str).str.strip().str.lstrip("'")
-
-        files_to_rename = st.file_uploader(
-            "选择需要重命名的文件（可以多选）",
-            accept_multiple_files=True,
-            key="rename_files"
-        )
-        if files_to_rename:
-            st.write("已选择文件：", [f.name for f in files_to_rename])
-            if st.button("开始批量重命名"):
-                zip_buffer = io.BytesIO()
-                renamed_count = 0
-                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
-                    for f in files_to_rename:
-                        file_base, file_ext = os.path.splitext(f.name)
-                        file_base = file_base.strip().lstrip("'")
-                        match_row = df2[df2["文件原名"] == file_base]
-                        if not match_row.empty:
-                            new_base_name = str(match_row["新名"].values[0]).strip().lstrip("'")
-                            new_name = new_base_name + file_ext
-                            zipf.writestr(new_name, f.getbuffer())
-                            renamed_count += 1
-                        else:
-                            st.warning(f"文件 '{f.name}' 在 Excel 中没有找到对应新名")
-                zip_buffer.seek(0)
-                st.success(f"重命名完成，共 {renamed_count} 个文件被重命名")
-                st.download_button(
-                    "📥 下载重命名后的文件（ZIP）",
-                    data=zip_buffer,
-                    file_name="重命名后的文件.zip",
-                    mime="application/zip"
-                )
