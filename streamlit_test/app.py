@@ -250,7 +250,10 @@ with open(os.path.join(BASE_DIR, "Rename_template.xlsx"), "rb") as f:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 st.markdown("Tips:按新名顺序扫描，扫描设置使用自动命名为1、2、3……这样文件原名只需填1、2、3下拉即可（像这样↓）")
-st.image("example.png")
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+st.image(os.path.join(BASE_DIR, "example.png"))
+
 # ==========================
 # 2️⃣ 上传 Excel
 # ==========================
@@ -307,4 +310,5 @@ if excel_file:
                     file_name="重命名后的文件.zip",
                     mime="application/zip"
                 )
+
 
