@@ -206,7 +206,7 @@ if excel_file:
             # ---------------------------
             if doc_type == "催缴函":
                 remove_first_two_sections(combined_doc)
-                remove_first_n_paragraphs(combined_doc, n=len(df))
+                remove_first_n_paragraphs(combined_doc, n=len(df)+14)
             else:
                 remove_first_table(combined_doc)
                 remove_first_two_sections(combined_doc)
@@ -279,3 +279,4 @@ if excel_file2:
                     file_name="重命名后的文件.zip",
                     mime="application/zip"
                 )
+
