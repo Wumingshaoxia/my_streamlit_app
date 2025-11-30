@@ -129,7 +129,11 @@ if excel_file:
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         TEMPLATE_PATH = os.path.join(BASE_DIR, "template1.docx")
         TEMPLATE2_PATH = os.path.join(BASE_DIR, "template2.docx")
-
+        if doc_type == "催缴函":
+            TEMPLATE_PATH = TEMPLATE1_PATH
+        else:
+            TEMPLATE_PATH = TEMPLATE2_PATH
+        
         if mode == "每个集团单独生成一个 Word":
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
@@ -313,6 +317,7 @@ if excel_file:
                     file_name="重命名后的文件.zip",
                     mime="application/zip"
                 )
+
 
 
 
