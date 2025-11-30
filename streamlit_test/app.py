@@ -14,8 +14,11 @@ st.title("Hi！这里可以生成催缴函/回执函")
 # =============================
 # 提供 Excel 模板下载
 # =============================
-import os
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+rename_template_path = os.path.join(BASE_DIR, "Rename_template.xlsx")
+
+with open(rename_template_path, "rb") as f:
+    rename_template = f.read()
+
 
 with open(os.path.join(BASE_DIR, "催缴函-template.xlsx"), "rb") as f:
 
@@ -239,9 +242,7 @@ st.title("这里可以批量重命名")
 # ==========================
 # 1️⃣ 提供 Excel 模板下载
 # ==========================
-import os
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+with open("Rename_template.xlsx", "rb") as f:
     st.download_button(
         "📥 下载Excel 模板（Rename_template.xlsx）",
         data=f,
@@ -306,6 +307,3 @@ if excel_file:
                     file_name="重命名后的文件.zip",
                     mime="application/zip"
                 )
-
-
-
