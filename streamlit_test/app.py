@@ -127,7 +127,7 @@ if excel_file:
         # 根据类型选择模板
         import os
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        TEMPLATE_PATH = os.path.join(BASE_DIR, "template1.docx")
+        TEMPLATE1_PATH = os.path.join(BASE_DIR, "template1.docx")
         TEMPLATE2_PATH = os.path.join(BASE_DIR, "template2.docx")
         if doc_type == "催缴函":
             TEMPLATE_PATH = TEMPLATE1_PATH
@@ -317,6 +317,7 @@ if excel_file:
                     file_name="重命名后的文件.zip",
                     mime="application/zip"
                 )
+
 
 
 
