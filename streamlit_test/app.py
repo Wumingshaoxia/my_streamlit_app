@@ -1,6 +1,5 @@
 import streamlit as st
 from docx import Document
-from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_BREAK
 from docx.shared import Pt
 from docx.oxml.ns import qn
@@ -145,7 +144,7 @@ if excel_file:
         else:
             combined_doc = Document()  # 新建空文档
             first = True
-            for _, row in df.iterrows():
+            for idx, row in df.iterrows():
                 doc = Document(TEMPLATE_PATH)
                 if doc_type == "催缴函":
                     placeholders = {
@@ -159,7 +158,6 @@ if excel_file:
                         "{{支付欠费截止日期}}": stop_date.strftime("%Y年%m月%d日"),
                         "{{终止业务日期}}": end_date.strftime("%Y年%m月%d日"),
                     }
-                    replace_placeholder(doc, placeholders)
                 else:
                     placeholders = {
                         "{{集团名称}}": row["集团名称"],
@@ -168,14 +166,14 @@ if excel_file:
                         "{{共计欠费}}": row["共计欠费"],
                         "{{回执日期}}": receipt_date.strftime("%Y年%m月%d日"),
                     }
-                    replace_placeholder(doc, placeholders, font_name="宋体", font_size=13)
+                replace_placeholder(doc, placeholders, font_name="宋体", font_size=13)
 
-                if not first:
-                    # 自动分页
-                    combined_doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
-                first = False
-
+                # 先复制内容
                 append_doc(combined_doc, doc)
+
+                # 复制完成后，在末尾添加分页符（除了最后一个集团不加）
+                if idx != df.index[-1]:
+                    combined_doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
             output_buffer = io.BytesIO()
             combined_doc.save(output_buffer)
