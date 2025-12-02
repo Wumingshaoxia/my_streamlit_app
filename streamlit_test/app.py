@@ -205,11 +205,11 @@ if excel_file:
             # ---------------------------
             if doc_type == "催缴函":
                 remove_first_two_sections(combined_doc)
-                remove_first_n_paragraphs(combined_doc, n=len(df)+14)  # 这里可以自行调整 +14
+                remove_first_n_paragraphs(combined_doc, n=len(df)+10)  # 这里可以自行调整 +14
             else:  # 回执函
                 remove_first_table(combined_doc)
                 remove_first_two_sections(combined_doc)
-                remove_first_n_paragraphs(combined_doc, n=len(df)+19)  # 这里也可以自行调整
+                remove_first_n_paragraphs(combined_doc, n=len(df)+15)  # 这里也可以自行调整
 
             output_buffer = io.BytesIO()
             combined_doc.save(output_buffer)
@@ -303,5 +303,6 @@ if excel_file:
                     file_name="重命名后的文件.zip",
                     mime="application/zip"
                 )
+
 
 
