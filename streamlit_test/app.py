@@ -176,8 +176,6 @@ if st.button("生成 Word"):
         # 合并模式
         combined_doc = Document(TEMPLATE_PATH)
         first = True
-        combined_doc.add_paragraph("")
-
         for _, row in df.iterrows():
             doc = Document(TEMPLATE_PATH)
             if doc_type == "催缴函":
@@ -227,6 +225,7 @@ if st.button("生成 Word"):
             file_name=f"合并{doc_type}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
+
 
 
 
