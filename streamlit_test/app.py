@@ -216,6 +216,7 @@ if st.button("生成 Word"):
             remove_first_n_paragraphs(combined_doc, n=len(df)+5)  # 可调整
 
         output_buffer = io.BytesIO()
+        combined_doc.paragraphs.insert(0, combined_doc.add_paragraph(""))
         combined_doc.save(output_buffer)
         output_buffer.seek(0)
         st.success(f"合并 {doc_type} Word 生成成功！点击下载👇")
@@ -225,6 +226,7 @@ if st.button("生成 Word"):
             file_name=f"合并{doc_type}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
+
 
 
 
