@@ -139,7 +139,8 @@ if excel_file:
             )
 
        # 合并生成回执函
-       combined_doc = Document()  # 新建空文档
+       combined_doc = Document() 
+       # 新建空文档
        first = True
        for idx, row in df.iterrows():
            doc = Document(TEMPLATE2_PATH)
@@ -175,4 +176,5 @@ if excel_file:
                 file_name=f"合并{doc_type}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
+
 
