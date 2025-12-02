@@ -209,7 +209,7 @@ if st.button("生成 Word"):
         # 根据类型单独设置删除行数
         if doc_type == "催缴函":
             remove_first_two_sections(combined_doc)
-            remove_first_n_paragraphs(combined_doc, n=len(df)+10)  # 可调整
+            remove_first_n_paragraphs(combined_doc, n=len(df)+8)  # 可调整
         else:
             remove_first_table(combined_doc)
             remove_first_two_sections(combined_doc)
@@ -225,6 +225,7 @@ if st.button("生成 Word"):
             file_name=f"合并{doc_type}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
+
 
 
 
