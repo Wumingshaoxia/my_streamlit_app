@@ -138,42 +138,32 @@ if excel_file:
                 mime="application/zip",
             )
 
-        # ==========================
-        # 合并生成
-        # ==========================
-        else:
-            combined_doc = Document()  # 新建空文档
-            first = True
-            for idx, row in df.iterrows():
-                doc = Document(TEMPLATE_PATH)
-                if doc_type == "催缴函":
-                    placeholders = {
-                        "{{集团名称}}": row["集团名称"],
-                        "{{客户经理}}": row["客户经理"],
-                        "{{客户经理手机号}}": row["客户经理手机号"],
-                        "{{逾期欠费金额}}": row["逾期欠费金额"],
-                        "{{违约金}}": row["违约金"],
-                        "{{共计欠费}}": row["共计欠费"],
-                        "{{发函日期}}": send_date.strftime("%Y年%m月%d日"),
-                        "{{支付欠费截止日期}}": stop_date.strftime("%Y年%m月%d日"),
-                        "{{终止业务日期}}": end_date.strftime("%Y年%m月%d日"),
-                    }
-                else:
-                    placeholders = {
-                        "{{集团名称}}": row["集团名称"],
-                        "{{客户经理}}": row["客户经理"],
-                        "{{客户经理手机号}}": row["客户经理手机号"],
-                        "{{共计欠费}}": row["共计欠费"],
-                        "{{回执日期}}": receipt_date.strftime("%Y年%m月%d日"),
-                    }
-                replace_placeholder(doc, placeholders, font_name="宋体", font_size=13)
+       # 合并生成回执函
+       combined_doc = Document()  # 新建空文档
+       first = True
+       for idx, row in df.iterrows():
+           doc = Document(TEMPLATE2_PATH)
+           placeholders = {
+               "{{集团名称}}": row["集团名称"],
+               "{{客户经理}}": row["客户经理"],
+               "{{客户经理手机号}}": row["客户经理手机号"],
+               "{{共计欠费}}": row["共计欠费"],
+               "{{回执日期}}": receipt_date.strftime("%Y年%m月%d日"),
+           }
+           replace_placeholder(doc, placeholders, font_name="宋体", font_size=13)
 
-                # 先复制内容
-                append_doc(combined_doc, doc)
+           # 删除空段落，防止分页异常
+           for p in doc.paragraphs:
+               if not p.text.strip():
+                   p._element.getparent().remove(p._element)
 
-                # 复制完成后，在末尾添加分页符（除了最后一个集团不加）
-                if idx != df.index[-1]:
-                    combined_doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+           # 先复制内容
+           append_doc(combined_doc, doc)
+
+           # 复制完成后，在末尾添加分页符（除了最后一个集团不加）
+           if idx != df.index[-1]:
+               combined_doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+
 
             output_buffer = io.BytesIO()
             combined_doc.save(output_buffer)
@@ -185,3 +175,4 @@ if excel_file:
                 file_name=f"合并{doc_type}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
+
