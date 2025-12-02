@@ -71,7 +71,7 @@ def replace_placeholder(doc, placeholders: dict, font_name=None, font_size=None)
                                         run.font.size = Pt(font_size)
 
 # ---------------------------
-# 复制文档内容
+# 复制文档内容（保留原格式）
 # ---------------------------
 def append_doc(target, source):
     for element in source.element.body:
@@ -139,46 +139,43 @@ if excel_file:
             )
 
         # ==========================
-        # 合并生成
+        # 合并生成（保留格式 + 分页）
         # ==========================
         else:
             combined_doc = Document()  # 新建空文档
-            first = True
-            for idx, row in df.iterrows():
+
+            for idx, row in enumerate(df.itertuples()):
                 doc = Document(TEMPLATE_PATH)
+
+                # 替换占位符
                 if doc_type == "催缴函":
                     placeholders = {
-                        "{{集团名称}}": row["集团名称"],
-                        "{{客户经理}}": row["客户经理"],
-                        "{{客户经理手机号}}": row["客户经理手机号"],
-                        "{{逾期欠费金额}}": row["逾期欠费金额"],
-                        "{{违约金}}": row["违约金"],
-                        "{{共计欠费}}": row["共计欠费"],
+                        "{{集团名称}}": row.集团名称,
+                        "{{客户经理}}": row.客户经理,
+                        "{{客户经理手机号}}": row.客户经理手机号,
+                        "{{逾期欠费金额}}": row.逾期欠费金额,
+                        "{{违约金}}": row.违约金,
+                        "{{共计欠费}}": row.共计欠费,
                         "{{发函日期}}": send_date.strftime("%Y年%m月%d日"),
                         "{{支付欠费截止日期}}": stop_date.strftime("%Y年%m月%d日"),
                         "{{终止业务日期}}": end_date.strftime("%Y年%m月%d日"),
                     }
                 else:
                     placeholders = {
-                        "{{集团名称}}": row["集团名称"],
-                        "{{客户经理}}": row["客户经理"],
-                        "{{客户经理手机号}}": row["客户经理手机号"],
-                        "{{共计欠费}}": row["共计欠费"],
+                        "{{集团名称}}": row.集团名称,
+                        "{{客户经理}}": row.客户经理,
+                        "{{客户经理手机号}}": row.客户经理手机号,
+                        "{{共计欠费}}": row.共计欠费,
                         "{{回执日期}}": receipt_date.strftime("%Y年%m月%d日"),
                     }
 
                 replace_placeholder(doc, placeholders, font_name="宋体", font_size=13)
 
-                # 删除空段落，防止分页异常（尤其是回执函模板开头表格）
-                for p in doc.paragraphs:
-                    if not p.text.strip():
-                        p._element.getparent().remove(p._element)
-
-                # 先复制内容
+                # 直接复制内容（保留格式）
                 append_doc(combined_doc, doc)
 
-                # 复制完成后，在末尾添加分页符（除了最后一个集团不加）
-                if idx != df.index[-1]:
+                # 每个集团后加分页符，最后一个集团不加
+                if idx != len(df) - 1:
                     combined_doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
             output_buffer = io.BytesIO()
