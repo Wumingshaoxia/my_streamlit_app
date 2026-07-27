@@ -219,6 +219,13 @@ if st.button("生成 Word"):
         #if len(combined_doc.paragraphs) > 0:
         #    last_p = combined_doc.paragraphs[-1]._element
         #   last_p.getparent().remove(last_p)
+        # 删除最后多余空白段落
+        while len(combined_doc.paragraphs) > 0:
+            last_p = combined_doc.paragraphs[-1]
+            if last_p.text.strip() == "":
+                last_p._element.getparent().remove(last_p._element)
+            else:
+                break
         output_buffer = io.BytesIO()
         combined_doc.save(output_buffer)
         output_buffer.seek(0)
