@@ -220,19 +220,7 @@ if st.button("生成 Word"):
         #    last_p = combined_doc.paragraphs[-1]._element
         #   last_p.getparent().remove(last_p)
         # 删除最后多余分页符
-def remove_last_page_break(doc):
-    for p in reversed(doc.paragraphs):
-        for run in p.runs:
-            if "w:type=\"page\"" in run._element.xml:
-                run._element.getparent().remove(run._element)
-                 return
-
-
-remove_last_page_break(combined_doc)
-
-output_buffer = io.BytesIO()
-combined_doc.save(output_buffer)
-output_buffer.seek(0)
+        remove_last_page_break(combined_doc)
         output_buffer = io.BytesIO()
         combined_doc.save(output_buffer)
         output_buffer.seek(0)
