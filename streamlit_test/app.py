@@ -321,6 +321,7 @@ if st.button("生成 Word"):
                         "{{客户经理手机号}}": row["客户经理手机号"],
                         "{{共计欠费}}": row["共计欠费"],
                         "{{回执日期}}": receipt_date.strftime("%Y年%m月%d日"),
+                        "{{区县}}": district,
 
                     }
 
