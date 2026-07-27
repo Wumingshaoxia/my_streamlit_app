@@ -216,9 +216,9 @@ if st.button("生成 Word"):
             remove_first_n_paragraphs(combined_doc, n=len(df)+4)  # 可调整
 
 
-        if len(combined_doc.paragraphs) > 0:
-            last_p = combined_doc.paragraphs[-1]._element
-            last_p.getparent().remove(last_p)
+        #if len(combined_doc.paragraphs) > 0:
+        #    last_p = combined_doc.paragraphs[-1]._element
+        #   last_p.getparent().remove(last_p)
         output_buffer = io.BytesIO()
         combined_doc.save(output_buffer)
         output_buffer.seek(0)
