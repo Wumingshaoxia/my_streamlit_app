@@ -302,6 +302,8 @@ if st.button("生成 Word"):
                         "{{支付欠费截止日期}}": stop_date.strftime("%Y年%m月%d日"),
                         "{{终止业务日期}}": end_date.strftime("%Y年%m月%d日"),
 
+                        "{{区县}}": district
+
                     }
 
                     replace_placeholder(
