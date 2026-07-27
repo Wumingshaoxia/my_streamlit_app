@@ -10,9 +10,12 @@ from docx.shared import Pt
 from docx.oxml.ns import qn
 import os
 
+
 st.title("Hi！这里可以生成催缴函/回执函")
 
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 # =============================
 # 提供 Excel 模板下载
@@ -25,6 +28,7 @@ with open(os.path.join(BASE_DIR, "催缴函-template.xlsx"), "rb") as f:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+
 # =============================
 # 上传 Excel
 # =============================
@@ -32,10 +36,14 @@ excel_file = st.file_uploader(
     "上传已填写的Excel模板",
     type="xlsx"
 )
+
+
 doc_type = st.selectbox(
     "请选择生成类型：",
     ["催缴函", "回执函"]
 )
+
+
 if doc_type == "催缴函":
     send_date = st.date_input("请选择发函日期")
     stop_date = st.date_input("请选择支付欠费截止日期")
@@ -43,9 +51,11 @@ if doc_type == "催缴函":
 else:
     receipt_date = st.date_input("请选择回执日期")
 
+
 if excel_file:
     st.success("Excel 上传成功！")
     df = pd.read_excel(excel_file)
+
 
 mode = st.radio(
     "请选择生成方式：",
@@ -55,6 +65,8 @@ mode = st.radio(
     )
 )
 
+
+
 # =============================
 # 替换占位符
 # =============================
@@ -62,9 +74,12 @@ def replace_placeholder(doc, placeholders, font_name=None, font_size=None):
 
     for p in doc.paragraphs:
         for key, value in placeholders.items():
+
             if key in p.text:
                 for run in p.runs:
+
                     if key in run.text:
+
                         run.text = run.text.replace(
                             key,
                             str(value)
@@ -80,14 +95,23 @@ def replace_placeholder(doc, placeholders, font_name=None, font_size=None):
                         if font_size:
                             run.font.size = Pt(font_size)
 
+
     for table in doc.tables:
+
         for row in table.rows:
+
             for cell in row.cells:
+
                 for key, value in placeholders.items():
+
                     if key in cell.text:
+
                         for p in cell.paragraphs:
+
                             for run in p.runs:
+
                                 if key in run.text:
+
                                     run.text = run.text.replace(
                                         key,
                                         str(value)
@@ -104,6 +128,7 @@ def replace_placeholder(doc, placeholders, font_name=None, font_size=None):
                                         run.font.size = Pt(font_size)
 
 
+
 # =============================
 # 合并文档
 # =============================
@@ -115,22 +140,34 @@ def append_doc(target, source):
             deepcopy(element)
         )
 
+
+
 # 删除前N段落
 def remove_first_n_paragraphs(doc, n):
+
     removed = 0
+
     while removed < n and len(doc.paragraphs) > 0:
+
         p = doc.paragraphs[0]
+
         p._element.getparent().remove(
             p._element
         )
 
         removed += 1
 
+
+
 # 删除前两个section
 def remove_first_two_sections(doc):
+
     if len(doc.sections) > 1:
+
         first_sec = doc.sections[0]
+
         for p in list(doc.paragraphs):
+
             if p._element.getroottree().getpath(p._element).startswith(
                 first_sec._sectPr.getroottree().getpath(
                     first_sec._sectPr
@@ -140,41 +177,60 @@ def remove_first_two_sections(doc):
                     p._element
                 )
 
+
+
 # 删除回执函第一个表格
 def remove_first_table(doc):
+
     if doc.tables:
+
         tbl = doc.tables[0]._element
 
         tbl.getparent().remove(tbl)
 
+
+
 # 删除最后分页符
 def remove_last_page_break(doc):
+
     for p in reversed(doc.paragraphs):
+
         for run in p.runs:
+
             if "w:type=\"page\"" in run._element.xml:
+
                 run._element.getparent().remove(
                     run._element
                 )
 
                 return
 
+
+
+
 # =============================
 # 生成
 # =============================
 if st.button("生成 Word"):
 
+
     # 选择模板
+
     if doc_type == "催缴函" and mode == "每个集团单独生成一个 Word":
+
         TEMPLATE_PATH = os.path.join(
             BASE_DIR,
             "template1.docx"
         )
 
+
     elif doc_type == "催缴函" and mode == "合并所有集团到一个 Word":
+
         TEMPLATE_PATH = os.path.join(
             BASE_DIR,
             "template1_2.docx"
         )
+
 
     elif doc_type == "回执函" and mode == "每个集团单独生成一个 Word":
 
@@ -182,6 +238,7 @@ if st.button("生成 Word"):
             BASE_DIR,
             "template2.docx"
         )
+
 
     else:
 
@@ -191,11 +248,14 @@ if st.button("生成 Word"):
         )
 
 
+
     # =============================
     # 单独生成
     # =============================
 
     if mode == "每个集团单独生成一个 Word":
+
+
         zip_buffer = io.BytesIO()
 
 
@@ -224,33 +284,51 @@ if st.button("生成 Word"):
                         "{{发函日期}}": send_date.strftime("%Y年%m月%d日"),
                         "{{支付欠费截止日期}}": stop_date.strftime("%Y年%m月%d日"),
                         "{{终止业务日期}}": end_date.strftime("%Y年%m月%d日"),
+
                     }
+
                     replace_placeholder(
                         doc,
                         placeholders
                     )
+
+
                 else:
+
                     placeholders = {
+
                         "{{集团名称}}": row["集团名称"],
                         "{{客户经理}}": row["客户经理"],
                         "{{客户经理手机号}}": row["客户经理手机号"],
                         "{{共计欠费}}": row["共计欠费"],
                         "{{回执日期}}": receipt_date.strftime("%Y年%m月%d日"),
+
                     }
+
+
                     replace_placeholder(
                         doc,
                         placeholders,
                         font_name="宋体",
                         font_size=13
                     )
+
+
                 file_buffer = io.BytesIO()
+
                 doc.save(file_buffer)
+
                 file_buffer.seek(0)
+
+
                 zipf.writestr(
                     f"{doc_type}_{row['集团名称']}.docx",
                     file_buffer.getvalue()
                 )
+
+
         zip_buffer.seek(0)
+
 
         st.download_button(
             "下载全部文件",
@@ -259,16 +337,28 @@ if st.button("生成 Word"):
             mime="application/zip"
         )
 
+
+
     # =============================
     # 合并生成
     # =============================
 
     else:
-       combined_doc = Document(TEMPLATE_PATH)
+
+
+        combined_doc = Document(TEMPLATE_PATH)
+
         first = True
+
+
         for _, row in df.iterrows():
+
+
             doc = Document(TEMPLATE_PATH)
+
+
             if doc_type == "催缴函":
+
                 placeholders = {
 
                     "{{集团名称}}": row["集团名称"],
@@ -288,7 +378,9 @@ if st.button("生成 Word"):
                     placeholders
                 )
 
+
             else:
+
                 placeholders = {
 
                     "{{集团名称}}": row["集团名称"],
@@ -296,7 +388,9 @@ if st.button("生成 Word"):
                     "{{客户经理手机号}}": row["客户经理手机号"],
                     "{{共计欠费}}": row["共计欠费"],
                     "{{回执日期}}": receipt_date.strftime("%Y年%m月%d日"),
+
                 }
+
 
                 replace_placeholder(
                     doc,
@@ -305,15 +399,24 @@ if st.button("生成 Word"):
                     font_size=13
                 )
 
+
+
             if not first:
+
                 combined_doc.add_section(
                     WD_SECTION.NEW_PAGE
                 )
+
+
             first = False
+
+
             append_doc(
                 combined_doc,
                 doc
             )
+
+
 
         # 保持你原来的分页逻辑
 
