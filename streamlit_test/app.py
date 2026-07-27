@@ -125,7 +125,7 @@ if st.button("生成 Word"):
     if doc_type == "催缴函" and mode == "每个集团单独生成一个 Word":
         TEMPLATE_PATH = os.path.join(BASE_DIR, "template1.docx")
     elif doc_type == "催缴函" and mode == "合并所有集团到一个 Word":
-        TEMPLATE_PATH = os.path.join(BASE_DIR, "template1_2.docx")
+        TEMPLATE_PATH = os.path.join(BASE_DIR, "template1.docx")
     elif doc_type == "回执函" and mode == "每个集团单独生成一个 Word":
         TEMPLATE_PATH = os.path.join(BASE_DIR, "template2.docx")
     else:  # 回执函 & 合并
